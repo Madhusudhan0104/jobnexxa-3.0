@@ -1,0 +1,1147 @@
+# Product Requirements Document (PRD)
+
+# Jobnexa — Local Worker-Employer Connection PWA
+
+***
+
+## 1\. Overview
+
+**App Name:** Jobnexa
+
+Jobnexa is a Progressive Web App (PWA) designed to bridge the gap between local workers and employers by creating a hyper-local, skill-based job marketplace. Workers can register their skills, availability, and preferred job types, while employers can post job requirements and browse or hire available workers in their geographic vicinity. The platform features a real-time availability dashboard that displays the count of available workers in a specific domain and area, automatically decrementing this count when a worker is successfully hired, ensuring employers always see accurate, up-to-date workforce availability data.
+
+The primary target audience includes two distinct user groups: **local workers** (daily wage earners, skilled tradespeople, gig workers, freelancers, and semi-skilled laborers such as electricians, plumbers, carpenters, delivery personnel, domestic helpers, and construction workers) and **employers** (small business owners, contractors, households, and local enterprises) who need immediate or short-term local labor. The key problems Jobnexa solves are: the inefficiency of informal word-of-mouth hiring, the lack of visibility workers have into available opportunities, the absence of a transparent system for employers to gauge workforce supply in their area, and the friction involved in matching the right skill set to the right job requirement quickly and reliably.
+
+***
+
+## 2\. Essential Core Features
+
+### 2.1 User Authentication & Role Selection
+
+* Dual-role registration: users sign up either as a **Worker** or an **Employer**
+* Email/password authentication and OTP-based phone number verification
+* Profile type is locked upon registration to maintain data integrity
+* Secure session management with JWT tokens via Supabase Auth
+
+### 2.2 Worker Profile Management
+
+* Workers can create and edit a detailed profile including:
+    * Full name, profile photo, contact number
+    * Primary skill category (e.g., Electrician, Plumber, Carpenter, Painter, Driver, Domestic Help, etc.)
+    * Secondary skills (multi-select)
+    * Years of experience
+    * Preferred job type (full-time, part-time, daily wage, contract)
+    * Current availability status (Available / Unavailable / Hired)
+    * Location (city, area/neighborhood — auto-detected or manually entered)
+    * Expected daily/hourly wage
+    * Short bio or work description
+    * Past work experience entries
+
+### 2.3 Employer Profile Management
+
+* Employers can create and edit a profile including:
+    * Company/individual name, logo or photo
+    * Business type or category
+    * Contact information
+    * Location (city, area)
+    * Brief description of their business
+
+### 2.4 Job Posting (Employer)
+
+* Employers can post job listings with the following fields:
+    * Job title
+    * Required skill category
+    * Job description and responsibilities
+    * Location of work
+    * Duration (one-time, daily, weekly, monthly)
+    * Pay rate (daily/hourly/fixed)
+    * Number of workers needed
+    * Application deadline
+    * Job status (Open / Closed / Filled)
+
+### 2.5 Worker Discovery & Availability Dashboard
+
+* A publicly visible (to employers) dashboard showing:
+    * Total number of available workers per skill category in a selected area
+    * Filter by city, locality/neighborhood, and skill domain
+    * Real-time count that decrements when a worker's status changes to "Hired"
+    * Visual representation using counters, cards, and color-coded availability indicators (high/medium/low)
+
+### 2.6 Worker Search & Filtering (Employer)
+
+* Employers can search workers by:
+    * Skill category
+    * Location (city + area)
+    * Availability status
+    * Experience level
+    * Expected wage range
+* Results display worker cards with key info, availability badge, and a "Hire / Contact" button
+
+### 2.7 Job Search & Filtering (Worker)
+
+* Workers can browse available job postings filtered by:
+    * Job category/skill
+    * Location
+    * Pay range
+    * Job type (full-time, part-time, daily)
+* Workers can apply to job listings directly through the app
+
+### 2.8 Hiring Workflow
+
+* Employer selects a worker → sends a hire request
+* Worker receives a notification and can Accept or Decline the request
+* Upon acceptance:
+    * Worker's status automatically changes to **Hired**
+    * The available worker count for that skill in that area decrements by 1 in real-time
+    * Job post's required count decrements if multiple workers were needed
+* When work is completed:
+    * Employer or worker can mark the job as **Completed**
+    * Worker's status resets to **Available**
+    * The availability count increments back accordingly
+
+### 2.9 In-App Notifications
+
+* Push notifications (via PWA Web Push API) for:
+    * New hire requests received (worker)
+    * Hire request accepted/declined (employer)
+    * New job postings matching worker's skill/location
+    * Job application status updates
+    * System alerts and reminders
+
+### 2.10 Rating & Review System
+
+* After job completion, both parties can leave a rating (1–5 stars) and a text review
+* Ratings are displayed on worker and employer profiles
+* Average rating shown on worker cards and employer profile
+
+### 2.11 Real-Time Availability Counter
+
+* Supabase Realtime subscriptions power live updates to availability counts
+* Counts are segmented by: Skill Category + City + Area/Neighborhood
+* Displayed prominently on the employer's discovery dashboard
+* Auto-updates without page refresh
+
+### 2.12 Admin Panel (Basic)
+
+* View all registered workers and employers
+* Manage skill categories and locations
+* Moderate flagged reviews
+* View platform-wide statistics (total workers, total jobs posted, total hires completed)
+
+***
+
+## 3\. Tech Stack
+
+### Front-End
+
+* **Framework:** React (with functional components and hooks)
+* **Styling:** Tailwind CSS
+* **Build Tool:** Vite
+* **PWA Configuration:** Vite PWA Plugin (`vite-plugin-pwa`) with service worker, web manifest, offline caching, and installable PWA support
+* **State Management:** Zustand or React Context API
+* **Form Management:** React Hook Form with Zod validation
+* **Routing:** React Router v6
+
+### Back-End
+
+* **Platform:** Supabase
+    * **Authentication:** Supabase Auth (email/password + phone OTP)
+    * **Database:** Supabase PostgreSQL
+        * Tables: `users`, `worker_profiles`, `employer_profiles`, `skills`, `locations`, `job_postings`, `hire_requests`, `reviews`, `availability_counts`
+    * **Real-Time:** Supabase Realtime for live availability count updates and hire status changes
+    * **Storage:** Supabase Storage for profile photos, resumes, and documents
+    * **Edge Functions:** Supabase Edge Functions for server-side logic (availability count triggers, notification dispatching)
+    * **Row Level Security (RLS):** Enforced on all tables for data privacy and role-based access
+
+### AI Integration
+
+* **Provider:** OpenAI GPT-4o
+* **Use Cases:**
+    * **Smart Job Description Generator:** Employers can auto-generate a job description by entering a few keywords; GPT-4o generates a complete, professional job posting
+    * **Skill Matching Suggestions:** Suggest the most relevant skill categories to a worker based on their free-text bio input
+    * **Worker Profile Enhancement:** GPT-4o helps workers improve their bio/description with one click
+    * **Job Recommendation Engine Text Summary:** Provide a short AI-generated explanation of why a particular worker matches a job posting
+
+### APIs & Integrations
+
+* **Geolocation API:** Browser Geolocation API for auto-detecting user city/area
+* **OpenAI GPT-4o API:** As described in AI Integration section
+* **Web Push Notifications API:** Via PWA service workers for native-like push notifications
+* **Google Maps / OpenStreetMap (Leaflet.js):** Optional map view showing workers clustered by area
+* **Supabase Realtime WebSocket:** For live counter updates
+
+### Technical Requirements
+
+* **PWA Compliance:** Must meet all PWA criteria — offline support for key screens, installable on Android/iOS home screen, service worker with caching strategies
+* **Responsive Design:** Mobile-first, optimized for screens 320px–768px
+* **Database Triggers:** PostgreSQL triggers in Supabase to automatically update `availability_counts` table when `hire_requests` status changes
+* **Performance:** Lazy loading of routes and images; skeleton loaders for async data
+
+***
+
+## 4\. Design Preferences
+
+### Interface
+
+The Jobnexa PWA should feature a clean, modern, and approachable mobile-first interface that balances professionalism with accessibility, using bold iconography, clear card-based layouts, and intuitive bottom navigation to ensure ease of use for workers who may have limited digital literacy.
+
+### Color Palette
+
+| Role | Color | Hex |
+| ---- | ----- | --- |
+| Primary | Deep Blue (trust, professionalism) | `#1A3C6E` |
+| Secondary | Vibrant Orange (energy, action) | `#F97316` |
+| Accent | Soft Teal (availability indicator - active) | `#0EA5E9` |
+| Success | Green (hired, completed) | `#22C55E` |
+| Warning | Amber (pending, low availability) | `#F59E0B` |
+| Danger | Red (unavailable, declined) | `#EF4444` |
+| Background | Light Gray | `#F8FAFC` |
+| Surface/Card | White | `#FFFFFF` |
+| Text Primary | Charcoal | `#1E293B` |
+| Text Secondary | Slate Gray | `#64748B` |
+
+### Typography
+
+* **Headings:** `Inter` (Bold / Semi-Bold) — clean and modern, excellent readability on mobile
+* **Body Text:** `Inter` (Regular / Medium) — consistent with heading family for visual harmony
+* **Accent/Labels:** `Inter` (Medium, uppercase with letter-spacing) for category tags and status badges
+
+### Additional Design Considerations
+
+* **Card-Based UI:** Workers and job listings displayed as rounded cards with subtle shadows
+* **Availability Badges:** Color-coded pill badges (Green = Available, Orange = Busy, Red = Hired/Unavailable)
+* **Bottom Navigation Bar:** 5-tab bottom nav for primary navigation (PWA mobile behavior)
+* **Skeleton Loaders:** Shown during data fetching for all list/card views
+* **Iconography:** Lucide React icon library for consistent, lightweight icons
+* **Micro-animations:** Framer Motion for subtle transitions (page entries, badge updates, count changes)
+* **Dark Mode:** Optional toggle (CSS variables based with Tailwind dark mode)
+* **Install Banner:** Custom PWA install prompt banner displayed on first visit
+
+***
+
+## 5\. All Screens/Pages
+
+***
+
+### 5.1 Splash / Landing Screen
+
+**Route:** `/`
+
+**UI Elements:**
+
+* Jobnexa logo (centered)
+* Tagline: *"Find Work. Hire Local. Instantly."*
+* Animated loading indicator
+* "Get Started" CTA button
+* "Already have an account? Log In" link
+
+**Navigation:**
+
+* Entry: App launch
+* Exit: → `/onboarding` (new user) or `/login` (returning user)
+
+**Conditional Elements:**
+
+* If user session exists → auto-redirect to `/dashboard`
+
+***
+
+### 5.2 Onboarding Screen
+
+**Route:** `/onboarding`
+
+**UI Elements:**
+
+* 3-slide onboarding carousel with illustrations:
+    * Slide 1: "Register Your Skills" (worker-focused)
+    * Slide 2: "Post Jobs & Hire Locally" (employer-focused)
+    * Slide 3: "Real-Time Worker Availability"
+* Progress dots indicator
+* "Next" button / "Skip" text button
+* Final slide: "Sign Up" and "Log In" buttons
+
+**Navigation:**
+
+* Entry: From `/` (first launch)
+* Exit: → `/signup` or `/login`
+
+***
+
+### 5.3 Sign Up Screen
+
+**Route:** `/signup`
+
+**UI Elements:**
+
+* Jobnexa logo header
+* Role selection toggle: **Worker** \| **Employer** (prominent pill toggle — required first step)
+* Full Name input field
+* Email input field
+* Phone number input field (with country code selector)
+* Password input field (with show/hide toggle)
+* Confirm Password input field
+* "Create Account" primary button
+* "Already have an account? Log In" link
+* Terms & Privacy Policy checkbox with links
+
+**Navigation:**
+
+* Entry: From `/onboarding` or `/login`
+* Exit: → `/verify-otp` → `/profile-setup`
+
+**Conditional Elements:**
+
+* Role selection determines the profile setup flow (worker vs employer)
+
+***
+
+### 5.4 OTP Verification Screen
+
+**Route:** `/verify-otp`
+
+**UI Elements:**
+
+* Title: "Verify Your Phone Number"
+* Subtitle showing masked phone number
+* 6-digit OTP input (individual digit boxes)
+* "Verify" button
+* "Resend OTP" button (with 60-second countdown timer)
+* "Change Number" link
+
+**Navigation:**
+
+* Entry: From `/signup`
+* Exit: → `/profile-setup` (on successful verification)
+
+***
+
+### 5.5 Login Screen
+
+**Route:** `/login`
+
+**UI Elements:**
+
+* Jobnexa logo header
+* Email/Phone input field
+* Password input field (with show/hide toggle)
+* "Forgot Password?" link
+* "Log In" primary button
+* "Don't have an account? Sign Up" link
+* Divider with "OR"
+* "Continue with Google" button (OAuth)
+
+**Navigation:**
+
+* Entry: From `/onboarding`, `/signup`, or splash
+* Exit: → `/dashboard` (on success) or `/forgot-password`
+
+***
+
+### 5.6 Forgot Password Screen
+
+**Route:** `/forgot-password`
+
+**UI Elements:**
+
+* Title and description text
+* Email input field
+* "Send Reset Link" button
+* Success state: confirmation message with email illustration
+* "Back to Login" link
+
+**Navigation:**
+
+* Entry: From `/login`
+* Exit: → `/login`
+
+***
+
+### 5.7 Worker Profile Setup Screen
+
+**Route:** `/profile-setup/worker`
+
+**UI Elements:**
+
+* Step indicator (Step 1 of 3, Step 2 of 3, Step 3 of 3)
+* **Step 1 — Basic Info:**
+    * Profile photo upload (camera icon + gallery picker)
+    * Full name (pre-filled)
+    * Date of birth
+    * Gender selector (radio buttons)
+    * "Next" button
+* **Step 2 — Skills & Work:**
+    * Primary skill category dropdown (Electrician, Plumber, Carpenter, Painter, Driver, Domestic Help, Construction Worker, etc.)
+    * Secondary skills multi-select chips
+    * Years of experience number input
+    * Preferred job type (checkbox group: Full-Time, Part-Time, Daily Wage, Contract)
+    * Expected daily/hourly wage input with currency selector
+    * AI "Enhance My Bio" button → GPT-4o powered bio generator
+    * Bio/description text area
+    * "Next" button
+* **Step 3 — Location:**
+    * "Detect My Location" button (uses Geolocation API)
+    * City input (auto-filled or manual)
+    * Area/Neighborhood input
+    * State input
+    * "Complete Setup" button
+
+**Navigation:**
+
+* Entry: From `/verify-otp`
+* Exit: → `/dashboard/worker`
+
+***
+
+### 5.8 Employer Profile Setup Screen
+
+**Route:** `/profile-setup/employer`
+
+**UI Elements:**
+
+* Step indicator (Step 1 of 2, Step 2 of 2)
+* **Step 1 — Business Info:**
+    * Company logo / profile photo upload
+    * Company/Individual name (pre-filled)
+    * Business category dropdown
+    * Business description text area
+    * "Next" button
+* **Step 2 — Location:**
+    * "Detect My Location" button
+    * City input
+    * Area/Neighborhood input
+    * State input
+    * "Complete Setup" button
+
+**Navigation:**
+
+* Entry: From `/verify-otp`
+* Exit: → `/dashboard/employer`
+
+***
+
+### 5.9 Worker Dashboard / Home Screen
+
+**Route:** `/dashboard/worker`
+
+**UI Elements:**
+
+* Top bar: Greeting ("Hello, [Name]!"), notification bell icon with badge count, profile avatar
+* **Availability Toggle Card:** Large toggle switch — "Set Yourself as Available / Unavailable"
+* **Current Status Badge:** Green/Red pill showing current status
+* **Active Hire Request Banner:** (Conditional) If pending hire request exists — "You have a new hire request!" with Accept/Decline buttons
+* **Active Job Card:** (Conditional) If currently hired — shows employer name, job title, location, and "Mark as Completed" button
+* **Recommended Jobs Section:**
+    * Horizontal scroll of job posting cards filtered by worker's skill and location
+    * Each card: Job title, employer name, pay, location, distance, "Apply" button
+* **My Applications Section:**
+    * List of jobs the worker has applied to with status chips (Pending / Accepted / Declined)
+* **Bottom Navigation Bar**
+
+**Navigation:**
+
+* Entry: Login / profile setup completion
+* Exit: Bottom nav to other screens
+
+***
+
+### 5.10 Employer Dashboard / Home Screen
+
+**Route:** `/dashboard/employer`
+
+**UI Elements:**
+
+* Top bar: "Hello, [Company Name]", notification bell, profile avatar
+* **Availability Stats Hero Card:**
+    * Prominently displayed — "Workers Available Near You"
+    * Dropdown to select skill category
+    * Location tag (current area)
+    * Large animated counter showing available worker count
+    * Color indicator (Green: High, Amber: Medium, Red: Low)
+* **My Active Job Posts Section:**
+    * Cards for each open job posting
+    * Shows: Job title, applicants count, workers needed vs hired, "View Applicants" button
+    * "Post New Job" FAB (floating action button) — Orange, bottom-right corner
+* **Recent Hire Activity:**
+    * Timeline of recent hire requests sent and their statuses
+* **Quick Search Bar:** Skill + Location search redirecting to `/search-workers`
+* **Bottom Navigation Bar**
+
+**Navigation:**
+
+* Entry: Login / profile setup
+* Exit: Bottom nav, FAB → `/post-job`
+
+***
+
+### 5.11 Availability Dashboard (Employer) Screen
+
+**Route:** `/availability`
+
+**UI Elements:**
+
+* Screen title: "Worker Availability"
+* **Filter Panel:**
+    * City selector (dropdown)
+    * Area/Neighborhood selector (dropdown or text input)
+    * Skill Category selector (chip group or dropdown)
+    * "Apply Filters" button
+* **Stats Grid:** 2-column grid of skill category cards showing:
+    * Skill icon + label
+    * Available count (large, bold number)
+    * Color-coded background (green/amber/red based on count threshold)
+    * Tap to drill down
+* **Drill-Down View (on card tap):**
+    * Modal or sub-screen showing list of available workers for that skill in the selected area
+    * Each worker: avatar, name, experience, wage, availability badge, "View Profile" button
+* **Real-Time Update Indicator:** Small pulse animation showing "Live Data"
+* **Optional Map View Toggle:** Toggle between grid and a map view (Leaflet.js) showing worker clusters
+
+**Navigation:**
+
+* Entry: Bottom nav (Employer)
+* Exit: → Worker profile screen or back to dashboard
+
+***
+
+### 5.12 Search Workers Screen (Employer)
+
+**Route:** `/search-workers`
+
+**UI Elements:**
+
+* Back button + "Search Workers" title
+* Search bar (skill/keyword text input)
+* **Filter Sheet (bottom drawer):**
+    * Skill category multi-select
+    * Location (city + area)
+    * Availability (Available only toggle)
+    * Experience range slider
+    * Wage range slider (min–max)
+    * "Apply Filters" button
+* **Results List:** Scrollable list of worker cards showing:
+    * Profile photo, name, primary skill, experience, wage expectation
+    * Location with distance tag
+    * Star rating
+    * Availability status badge
+    * "View Profile" button
+* **Empty State:** Illustration + message when no workers found
+* **Sort Options:** Sort by — Nearest, Rating, Wage (Low to High / High to Low)
+
+**Navigation:**
+
+* Entry: Employer dashboard quick search or bottom nav
+* Exit: → Worker Profile screen
+
+***
+
+### 5.13 Worker Profile Detail Screen (Employer View)
+
+**Route:** `/worker/:workerId`
+
+**UI Elements:**
+
+* Back button
+* Profile photo (large, circular)
+* Name, primary skill badge, availability badge
+* Star rating with review count
+* Location (city, area)
+* Experience and expected wage
+* Skills chips (primary + secondary)
+* Bio/description text
+* Work Experience timeline entries
+* **"Send Hire Request" button** (Primary, full-width — disabled if worker is already Hired)
+* Reviews section: list of past reviews with star ratings and text
+* Share profile icon (top-right)
+
+**Navigation:**
+
+* Entry: From `/search-workers` or `/availability`
+* Exit: → Hire Request Confirmation modal → back
+
+**Conditional Elements:**
+
+* If worker status = "Hired" → button shows "Currently Unavailable" (disabled, grayed)
+* If employer already sent a request → button shows "Request Sent" (pending state)
+
+***
+
+### 5.14 Send Hire Request Screen / Modal
+
+**Route:** `/hire-request/:workerId` (or modal overlay)
+
+**UI Elements:**
+
+* Worker name and photo header
+* Associated Job Post selector: dropdown to link hire request to an open job post
+* Message to worker (text area — optional)
+* Proposed wage (pre-filled from job post, editable)
+* Work start date (date picker)
+* Work duration (text input)
+* Work location confirmation
+* "Send Hire Request" primary button
+* "Cancel" text button
+
+**Navigation:**
+
+* Entry: From `/worker/:workerId`
+* Exit: → Employer dashboard (after sending) with success toast
+
+***
+
+### 5.15 Job Search Screen (Worker)
+
+**Route:** `/jobs`
+
+**UI Elements:**
+
+* Screen title: "Find Jobs"
+* Search bar (keyword/job title input)
+* **Filter Chips Row:** Quick filter chips — "Near Me", "Daily Wage", "Part-Time", "Full-Time"
+* **Full Filter Drawer (bottom sheet):**
+    * Skill/category filter
+    * Location (city + area)
+    * Pay range slider
+    * Job type checkboxes
+    * Posted within (date range)
+    * "Apply" button
+* **Job Listing Cards:**
+    * Job title, employer name (with rating), location, distance
+    * Pay rate, job type badge, posted date
+    * "Apply Now" button
+* **Empty State:** Message + illustration for no jobs found
+* Sort options: Latest, Nearest, Highest Pay
+
+**Navigation:**
+
+* Entry: Bottom nav (Worker)
+* Exit: → Job Detail screen
+
+***
+
+### 5.16 Job Detail Screen (Worker)
+
+**Route:** `/job/:jobId`
+
+**UI Elements:**
+
+* Back button + Share icon
+* Job title (large heading)
+* Employer name, logo, star rating — tappable (→ employer public profile)
+* Location + distance from worker
+* Pay rate + job type badge
+* Posted date + Application deadline
+* **"Apply Now" button** (full-width, primary orange)
+* Job description (full text)
+* Requirements section (bulleted list)
+* **AI Match Score Card:** GPT-4o powered — "Why this job matches you: [explanation]" (small card)
+* Similar Jobs horizontal scroll section
+
+**Navigation:**
+
+* Entry: From `/jobs`
+* Exit: → Back to `/jobs` or → Application confirmation
+
+**Conditional Elements:**
+
+* If already applied → button shows "Application Sent" (disabled)
+* If job is closed → button shows "Job Closed" (disabled)
+
+***
+
+### 5.17 Post a Job Screen (Employer)
+
+**Route:** `/post-job`
+
+**UI Elements:**
+
+* Back button + "Post a Job" title
+* Job title input
+* Skill category selector (required)
+* Job description text area
+* **"Generate with AI" button:** Calls GPT-4o to auto-generate description from title + category
+* Number of workers needed (number input + +/- stepper)
+* Pay rate input + pay type selector (Hourly / Daily / Fixed)
+* Job type selector (Full-Time / Part-Time / Daily Wage / Contract)
+* Work location input (city + area)
+* Duration input (text: e.g., "3 days", "1 month")
+* Application deadline date picker
+* "Preview Job Post" button
+* "Publish Job" primary button
+
+**Navigation:**
+
+* Entry: From employer dashboard FAB or bottom nav
+* Exit: → Employer dashboard (after publishing) with success toast
+
+***
+
+### 5.18 Manage Job Posts Screen (Employer)
+
+**Route:** `/my-jobs`
+
+**UI Elements:**
+
+* Screen title: "My Job Posts"
+* Tab bar: **Open** \| **Closed** \| **Completed**
+* List of job post cards per tab:
+    * Job title, date posted
+    * Number of applicants received
+    * Workers needed vs hired (e.g., "2/3 hired")
+    * Status badge (Open/Closed/Filled)
+    * Action buttons: "View Applicants", "Edit", "Close Job"
+* "Post New Job" button (top-right or FAB)
+* Empty state per tab
+
+**Navigation:**
+
+* Entry: Bottom nav (Employer)
+* Exit: → Job Applicants screen or Post Job screen
+
+***
+
+### 5.19 Job Applicants Screen (Employer)
+
+**Route:** `/my-jobs/:jobId/applicants`
+
+**UI Elements:**
+
+* Back button + Job title header
+* Tab bar: **Applicants** \| **Hired**
+* Applicants list (under Applicants tab):
+    * Worker card: photo, name, skill, experience, wage expectation, rating
+    * "View Profile" button → `/worker/:workerId`
+    * "Hire" button (triggers hire request flow)
+    * "Decline" button
+* Hired workers list (under Hired tab):
+    * Same card with "Mark Complete" button
+* Job summary stats bar at top: Total applicants, Hired count, Needed count
+
+**Navigation:**
+
+* Entry: From `/my-jobs`
+* Exit: → Worker profile or back
+
+***
+
+### 5.20 Hire Requests Screen (Worker)
+
+**Route:** `/hire-requests`
+
+**UI Elements:**
+
+* Screen title: "Hire Requests"
+* Tab bar: **Pending** \| **Active** \| **History**
+* Pending requests list:
+    * Employer name, logo, job title
+    * Proposed wage, work start date
+    * "View Details" expandable section
+    * "Accept" (green) and "Decline" (red) buttons
+* Active hire card (if accepted):
+    * Employer info, job title, start date
+    * In-progress status badge
+    * "Mark as Completed" button
+    * "Contact Employer" button (opens native dialer or in-app chat)
+* History list: Past completed/declined requests with date and outcome badge
+
+**Navigation:**
+
+* Entry: Bottom nav (Worker) or notification tap
+* Exit: Back to dashboard
+
+***
+
+### 5.21 Notifications Screen
+
+**Route:** `/notifications`
+
+**UI Elements:**
+
+* Screen title: "Notifications"
+* "Mark All as Read" text button (top-right)
+* Scrollable notification list:
+    * Notification icon (based on type), title, description, timestamp
+    * Unread notifications highlighted with accent color dot
+    * Tapping each notification navigates to relevant screen
+* Empty state: "No notifications yet" illustration
+* Notification categories: Hire Requests, Job Matches, Application Updates, System
+
+**Navigation:**
+
+* Entry: Bell icon tap from any dashboard header
+* Exit: Back arrow or bottom nav
+
+***
+
+### 5.22 Profile Screen (Worker)
+
+**Route:** `/profile/worker`
+
+**UI Elements:**
+
+* Profile photo (editable, with camera icon overlay)
+* Name, primary skill badge, availability status badge
+* Star rating and review count
+* Location display
+* Edit Profile button (→ edit form)
+* **Sections:**
+    * Skills (primary + secondary chips)
+    * Experience & Bio
+    * Work History entries
+    * Reviews received (scrollable list)
+* Availability toggle switch
+* "Share Profile" button (generates shareable link)
+
+**Navigation:**
+
+* Entry: Bottom nav Profile tab
+* Exit: → Edit Profile screen
+
+***
+
+### 5.23 Edit Worker Profile Screen
+
+**Route:** `/profile/worker/edit`
+
+**UI Elements:**
+
+* All fields from profile setup, pre-filled with current data
+* Profile photo re-upload
+* "AI Enhance Bio" button
+* Save Changes button
+* Cancel button
+
+**Navigation:**
+
+* Entry: From `/profile/worker`
+* Exit: → `/profile/worker`
+
+***
+
+### 5.24 Profile Screen (Employer)
+
+**Route:** `/profile/employer`
+
+**UI Elements:**
+
+* Company logo/photo (editable)
+* Company name, business category, location
+* Average rating given by workers
+* Edit Profile button
+* **Sections:**
+    * Business description
+    * Active job posts count
+    * Reviews from workers
+* "Share Profile" button
+
+**Navigation:**
+
+* Entry: Bottom nav Profile tab
+* Exit: → Edit Employer Profile
+
+***
+
+### 5.25 Reviews & Ratings Screen
+
+**Route:** `/reviews/:userId`
+
+**UI Elements:**
+
+* User/company name header
+* Overall star rating (large)
+* Rating breakdown bar chart (5★ to 1★)
+* Scrollable list of individual reviews:
+    * Reviewer name, avatar, star rating, date, text review
+* "Leave a Review" button (conditional — only after completed job)
+
+**Navigation:**
+
+* Entry: From Worker Profile or Employer Profile
+* Exit: Back arrow
+
+***
+
+### 5.26 Leave Review Screen / Modal
+
+**Route:** `/leave-review/:jobId` (or modal)
+
+**UI Elements:**
+
+* Job title and counterparty name header
+* Star rating selector (interactive 1–5 stars)
+* Text review input (multi-line)
+* "Submit Review" button
+* "Skip" text link
+
+**Navigation:**
+
+* Entry: After job marked as Completed
+* Exit: → Dashboard
+
+***
+
+### 5.27 Settings Screen
+
+**Route:** `/settings`
+
+**UI Elements:**
+
+* Screen title: "Settings"
+* **Account Settings:**
+    * Change Password
+    * Change Phone Number
+    * Change Email
+* **Notification Settings:**
+    * Toggle for hire request notifications
+    * Toggle for job match notifications
+    * Toggle for application updates
+    * Toggle for marketing/promotional notifications
+* **Appearance:**
+    * Dark Mode toggle
+* **Privacy & Security:**
+    * Profile visibility toggle (hide from public search)
+    * Block/report user link
+* **Support:**
+    * Help Center link
+    * Contact Support link
+    * Report a Bug link
+* **Legal:**
+    * Terms of Service link
+    * Privacy Policy link
+* **Logout** button (red text)
+* **Delete Account** button (danger zone)
+
+**Navigation:**
+
+* Entry: Profile screen settings icon or bottom nav
+* Exit: Any section or back to Profile
+
+***
+
+### 5.28 Admin Dashboard Screen
+
+**Route:** `/admin`
+
+**UI Elements:**
+
+* Admin-only route (role-based access)
+* Stats overview cards: Total Workers, Total Employers, Total Jobs Posted, Total Hires Completed
+* Quick tables: Recent registrations, Recent job posts, Recent hires
+* Navigation links: Manage Users, Manage Jobs, Manage Skill Categories, Manage Reviews, Platform Settings
+* Charts: Worker availability trends, Hire completion rate
+
+**Navigation:**
+
+* Entry: Direct URL + admin role verification
+* Separate admin navigation sidebar (not bottom nav)
+
+***
+
+### 5.29 404 / Error Screen
+
+**Route:** `*`
+
+**UI Elements:**
+
+* Jobnexa logo
+* Large "404" text
+* "Oops! Page not found." message
+* Illustration (lost worker/map)
+* "Go Back Home" button
+
+***
+
+## 6\. App Menu and Navigation Structure
+
+### Navigation Type
+
+**Bottom Navigation Bar** (5 tabs) — fixed at screen bottom, consistent across all main screens. This is the primary navigation system for this PWA, mimicking native app behavior.
+
+***
+
+### Worker Bottom Navigation Tabs
+
+| Tab | Icon | Label | Route |
+| --- | ---- | ----- | ----- |
+| 1 | 🏠 Home | Home | `/dashboard/worker` |
+| 2 | 🔍 Jobs | Find Jobs | `/jobs` |
+| 3 | 📋 Requests | Hire Requests | `/hire-requests` |
+| 4 | 🔔 Alerts | Notifications | `/notifications` |
+| 5 | 👤 Profile | My Profile | `/profile/worker` |
+
+***
+
+### Employer Bottom Navigation Tabs
+
+| Tab | Icon | Label | Route |
+| --- | ---- | ----- | ----- |
+| 1 | 🏠 Home | Dashboard | `/dashboard/employer` |
+| 2 | 📊 Availability | Worker Stats | `/availability` |
+| 3 | 🔍 Workers | Search Workers | `/search-workers` |
+| 4 | 💼 Jobs | My Jobs | `/my-jobs` |
+| 5 | 👤 Profile | Profile | `/profile/employer` |
+
+***
+
+### Navigation Hierarchy
+
+```
+App Root (/)
+├── Splash / Landing
+├── Onboarding
+├── Auth
+│   ├── Sign Up → OTP Verification → Profile Setup
+│   └── Login → Dashboard
+│
+├── WORKER SECTION
+│   ├── Dashboard (Home Tab)
+│   │   └── Recommended Job Card → Job Detail → Apply
+│   ├── Find Jobs (Jobs Tab)
+│   │   └── Job Detail → Apply / View Employer
+│   ├── Hire Requests (Requests Tab)
+│   │   ├── Pending → Accept / Decline
+│   │   ├── Active → Mark Complete → Leave Review
+│   │   └── History
+│   ├── Notifications (Alerts Tab)
+│   │   └── Tap → Relevant Screen
+│   └── Profile (Profile Tab)
+│       ├── Edit Profile
+│       ├── Reviews
+│       └── Settings
+│           └── Logout
+│
+├── EMPLOYER SECTION
+│   ├── Dashboard (Home Tab)
+│   │   └── Job Post Card → Applicants → Hire/Decline Worker
+│   ├── Availability (Stats Tab)
+│   │   └── Skill Card → Worker List → Worker Profile → Hire
+│   ├── Search Workers (Workers Tab)
+│   │   └── Worker Card → Worker Profile → Send Hire Request
+│   ├── My Jobs (Jobs Tab)
+│   │   ├── Post New Job (FAB/Button)
+│   │   └── Job Card → Applicants → Hire/Decline
+│   └── Profile (Profile Tab)
+│       ├── Edit Profile
+│       ├── Reviews from Workers
+│       └── Settings
+│           └── Logout
+│
+└── ADMIN SECTION (Separate)
+    └── /admin → Admin Dashboard → Sub-management screens
+```
+
+### Additional Navigation Patterns
+
+* **Top App Bar:** Persistent on all screens with back arrow (where applicable), screen title, and contextual actions (notifications bell, share icon)
+* **Floating Action Button (FAB):** Orange "+" FAB on employer dashboard and `/my-jobs` for quick job posting
+* **Bottom Sheets:** Used for filter panels, confirmation dialogs, and drill-down data to maintain the mobile PWA feel
+* **Modal Overlays:** For hire request sending, leaving reviews, and quick confirmations
+
+***
+
+## 7\. User Flow
+
+### Flow A: Worker Registration to First Job Application
+
+```
+Step 1: Worker opens Jobnexa PWA on mobile browser
+Step 2: Splash screen loads → "Get Started" tapped
+Step 3: Onboarding carousel viewed (or skipped)
+Step 4: Taps "Sign Up" → Sign Up screen
+Step 5: Selects "Worker" role toggle
+Step 6: Fills name, email, phone, password → "Create Account"
+Step 7: OTP screen → enters 6-digit OTP received on phone
+Step 8: Profile Setup Step 1 — uploads photo, fills basic info → "Next"
+Step 9: Profile Setup Step 2 — selects "Electrician" as primary skill, adds secondary skills,
+        enters experience, expected wage, taps "AI Enhance Bio" → reviews AI bio → "Next"
+Step 10: Profile Setup Step 3 — taps "Detect My Location" → city/area auto-filled → "Complete Setup"
+Step 11: Redirected to Worker Dashboard
+Step 12: Sees availability toggle — taps to set status to "Available"
+Step 13: Sees Recommended Jobs section — scrolls and finds a relevant job card
+Step 14: Taps job card → Job Detail screen
+Step 15: Reviews job description, sees AI Match Score card ("95% match – your electrical skills fit this role")
+Step 16: Taps "Apply Now" → confirmation toast "Application Sent!"
+Step 17: Returns to dashboard → My Applications section shows new entry with "Pending" status
+```
+
+***
+
+### Flow B: Employer Posting a Job and Hiring a Worker
+
+```
+Step 1: Employer opens Jobnexa PWA → logs in (existing account)
+Step 2: Directed to Employer Dashboard
+Step 3: Views Availability Stats Hero Card — selects "Plumber" skill, area "Koramangala" →
+        counter shows "12 Available Plumbers"
+Step 4: Taps orange FAB "+" → Post a Job screen
+Step 5: Enters job title "Need Plumber for Bathroom Renovation"
+Step 6: Selects Skill Category "Plumber", taps "Generate with AI"
+        → GPT-4o generates a detailed job description → reviews and edits
+Step 7: Sets workers needed = 1, pay = ₹1200/day, duration = "2 days", location = "Koramangala"
+Step 8: Sets application deadline → taps "Preview Job Post" → satisfied → "Publish Job"
+Step 9: Success toast → returns to Employer Dashboard — job appears in "My Active Job Posts"
+Step 10: Goes to "Search Workers" tab → filters by "Plumber" + "Koramangala"
+Step 11: Browses result list → finds a worker with 5★ rating → taps "View Profile"
+Step 12: Reviews worker profile (skills, bio, reviews, wage expectation)
+Step 13: Taps "Send Hire Request" → Hire Request screen
+Step 14: Links request to the published job post, adds message, confirms wage → "Send Hire Request"
+Step 15: Success — returns to dashboard with confirmation
+```
+
+***
+
+### Flow C: Worker Receiving and Accepting a Hire Request
+
+```
+Step 1: Worker receives push notification: "New Hire Request from [Employer Name]"
+Step 2: Taps notification → Hire Requests screen → "Pending" tab highlighted
+Step 3: Sees hire request card — employer name, job title, proposed wage, start date
+Step 4: Taps "View Details" → expanded view shows full job details and employer message
+Step 5: Taps "Accept" button → confirmation bottom sheet "Are you sure you want to accept?"
+Step 6: Taps "Confirm Accept"
+Step 7: Worker status automatically changes from "Available" → "Hired"
+Step 8: Worker Dashboard shows Active Job Card for the accepted job
+Step 9: Availability counter for "Plumber – Koramangala" decrements from 12 → 11 (real-time)
+Step 10: Employer receives push notification: "Your hire request was accepted by [Worker Name]"
+```
+
+***
+
+### Flow D: Job Completion and Review
+
+```
+Step 1: Worker completes the plumbing work
+Step 2: Worker opens Jobnexa → Dashboard → sees Active Job Card
+Step 3: Taps "Mark as Completed"
+Step 4: Confirmation modal → "Confirm Job Completion" → confirms
+Step 5: Job moves to History, Worker status resets to "Available"
+Step 6: Availability counter for "Plumber – Koramangala" increments back from 11 → 12
+Step 7: Employer receives push notification: "Job marked as completed by [Worker Name]"
+Step 8: "Leave a Review for [Worker Name]?" prompt appears on employer's dashboard
+Step 9: Employer taps → Leave Review modal → selects 5 stars, types review text → "Submit"
+Step 10: Worker receives notification of new review
+Step 11: Worker is prompted to rate the employer → goes to Hire Requests → History → "Leave Review"
+Step 12: Worker rates employer → both reviews saved to database
+Step 13: Worker's profile star rating updates to reflect new review
+```
+
+***
+
+### Flow E: Employer Browsing Real-Time Availability Dashboard
+
+```
+Step 1: Employer logs in → navigates to "Availability" tab (bottom nav)
+Step 2: Availability Dashboard loads with default location (employer's registered area)
+Step 3: Sees skill category grid — all domains with live worker counts
+Step 4: Filters by city "Bangalore" and area "Indiranagar"
+Step 5: Grid updates — shows "Electricians: 8", "Plumbers: 5", "Carpenters: 3", etc.
+Step 6: Notices "Carpenters" count is low (red card) — decides to post a job quickly
+Step 7: Taps "Carpenter" card → drill-down modal shows list of 3 available carpenters
+Step 8: Reviews each carpenter profile inline
+Step 9: Taps "View Profile" on preferred candidate → Worker Profile Detail screen
+Step 10: Sends hire request directly from this screen
+Step 11: Upon confirmation, Carpenter count decrements live: "Carpenters: 3 → 2"
+```
+
+***
+
+*End of Jobnexa PRD*

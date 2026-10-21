@@ -1,0 +1,8 @@
+{
+  "name": "Remix Jobnexa",
+  "description": "Local worker-employer connection PWA with real-time availability tracking, instant hiring, and dual role interfaces.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

@@ -1,0 +1,119 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile with role-based attributes for workers or employers",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string" },
+        "name": { "type": "string" },
+        "avatar": { "type": "string" },
+        "role": { "type": "string", "enum": ["worker", "employer"] },
+        "city": { "type": "string" },
+        "area": { "type": "string" },
+        "phone": { "type": "string" },
+        "primarySkill": { "type": "string" },
+        "secondarySkills": { "type": "array" },
+        "experienceYears": { "type": "number" },
+        "expectedWage": { "type": "number" },
+        "wageType": { "type": "string" },
+        "bio": { "type": "string" },
+        "availabilityStatus": { "type": "string", "enum": ["available", "unavailable", "hired"] },
+        "rating": { "type": "number" },
+        "reviewCount": { "type": "number" },
+        "completedJobsCount": { "type": "number" },
+        "companyName": { "type": "string" },
+        "businessType": { "type": "string" },
+        "description": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["uid", "email", "name", "role", "city", "area"]
+    },
+    "JobPosting": {
+      "title": "JobPosting",
+      "description": "Job listing posted by an employer",
+      "type": "object",
+      "properties": {
+        "employerId": { "type": "string" },
+        "employerName": { "type": "string" },
+        "title": { "type": "string" },
+        "skillCategory": { "type": "string" },
+        "description": { "type": "string" },
+        "responsibilities": { "type": "array" },
+        "city": { "type": "string" },
+        "area": { "type": "string" },
+        "duration": { "type": "string" },
+        "payRate": { "type": "number" },
+        "payType": { "type": "string" },
+        "jobType": { "type": "string" },
+        "workersNeeded": { "type": "number" },
+        "workersHired": { "type": "number" },
+        "deadline": { "type": "string" },
+        "status": { "type": "string", "enum": ["Open", "Filled", "Closed"] },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["employerId", "title", "skillCategory", "description", "payRate", "status"]
+    },
+    "HireRequest": {
+      "title": "HireRequest",
+      "description": "Direct hire offer or contract sent from employer to worker",
+      "type": "object",
+      "properties": {
+        "jobId": { "type": "string" },
+        "jobTitle": { "type": "string" },
+        "employerId": { "type": "string" },
+        "employerName": { "type": "string" },
+        "employerLogo": { "type": "string" },
+        "employerPhone": { "type": "string" },
+        "workerId": { "type": "string" },
+        "workerName": { "type": "string" },
+        "workerSkill": { "type": "string" },
+        "workerAvatar": { "type": "string" },
+        "proposedWage": { "type": "number" },
+        "payType": { "type": "string" },
+        "startDate": { "type": "string" },
+        "duration": { "type": "string" },
+        "location": { "type": "string" },
+        "message": { "type": "string" },
+        "status": { "type": "string", "enum": ["Pending", "Accepted", "Declined", "Completed"] },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["employerId", "workerId", "jobTitle", "proposedWage", "status"]
+    },
+    "Review": {
+      "title": "Review",
+      "description": "Feedback and star ratings left after job completion",
+      "type": "object",
+      "properties": {
+        "targetId": { "type": "string" },
+        "reviewerName": { "type": "string" },
+        "reviewerAvatar": { "type": "string" },
+        "reviewerRole": { "type": "string" },
+        "rating": { "type": "number" },
+        "comment": { "type": "string" },
+        "jobTitle": { "type": "string" },
+        "date": { "type": "string" }
+      },
+      "required": ["targetId", "reviewerName", "rating", "comment"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profiles for both workers and employers."
+    },
+    "/jobs/{jobId}": {
+      "schema": "JobPosting",
+      "description": "Job requirements posted by employers."
+    },
+    "/hireRequests/{requestId}": {
+      "schema": "HireRequest",
+      "description": "Hire proposals and contracts."
+    },
+    "/reviews/{reviewId}": {
+      "schema": "Review",
+      "description": "Ratings and reviews submitted upon job completion."
+    }
+  }
+}
